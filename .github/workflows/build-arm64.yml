@@ -45,6 +45,8 @@ jobs:
           ANDROID_NDK_ROOT: ${{ steps.ndk.outputs.ndk-path }}
         run: |
           set -e
+          git config --global user.name "lab"
+          git config --global user.email "lab@example.com"
           git clone --recurse-submodules https://github.com/frida/frida
           cd frida
           for path in ../patches/*; do
