@@ -47,8 +47,17 @@ jobs:
           set -e
           git config --global user.name "lab"
           git config --global user.email "lab@example.com"
-          git clone --recurse-submodules https://github.com/frida/frida
+
+          # PENTING: pin ke tag RILIS frida (bukan main-dev) biar patch Florida cocok
+          FRIDA_TAG=$(curl -s https://api.github.com/repos/frida/frida/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')
+          echo "FRIDA_TAG=$FRIDA_TAG"
+          echo "FRIDA_TAG=$FRIDA_TAG" >> "$GITHUB_ENV"
+
+          git clone https://github.com/frida/frida
           cd frida
+          git checkout "$FRIDA_TAG"
+          git submodule update --init --recursive
+
           for path in ../patches/*; do
             name=$(basename "$path")
             [ -d "subprojects/$name" ] || continue
@@ -68,6 +77,6 @@ jobs:
       - name: Upload frida-server artifact
         uses: actions/upload-artifact@v4
         with:
-          name: florida-server-arm64
+          name: florida-server-${{ env.FRIDA_TAG }}-arm64
           path: build-arm64/subprojects/frida-core/server/frida-server
           if-no-files-found: error
