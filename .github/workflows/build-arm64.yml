@@ -68,10 +68,20 @@ jobs:
               abs=$(realpath "$p")
               echo "   -> $(basename "$p")"
               ( cd "subprojects/$name" && git apply --reject --whitespace=nowarn "$abs" ) \
-                && echo "      OK" || echo "      [!] sebagian/skip (lihat .rej)"
+                && echo "      OK" || echo "      [!] sebagian/skip"
             done
+            # revert file yg ter-apply SEBAGIAN (punya .rej) -> kembalikan ke asli
+            # supaya tak merusak compile. File yg utuh (tanpa .rej) tetap dipertahankan.
+            ( cd "subprojects/$name"
+              for rej in $(find . -name '*.rej' 2>/dev/null); do
+                f="${rej%.rej}"
+                echo "   revert partial -> $f"
+                git checkout -- "$f" 2>/dev/null || true
+                rm -f "$rej"
+              done
+            )
           done
-          echo "== .rej files (hunk yg gagal) =="
+          echo "== sisa .rej (harus kosong) =="
           find subprojects -name '*.rej' -print || true
           cd ..
           mkdir build-arm64 && cd build-arm64
