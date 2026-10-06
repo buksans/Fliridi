@@ -25,7 +25,7 @@ jobs:
         id: ndk
         uses: nttld/setup-ndk@v1
         with:
-          ndk-version: r27c
+          ndk-version: r29
 
       - uses: actions/setup-python@v5
         with:
@@ -64,9 +64,10 @@ jobs:
             name=$(basename "$path")
             [ -d "subprojects/$name" ] || continue
             echo "== apply patches -> subprojects/$name =="
-            for p in ../patches/"$name"/*.patch; do
+            for p in "$path"/*.patch; do
+              abs=$(realpath "$p")
               echo "   -> $(basename "$p")"
-              ( cd "subprojects/$name" && git apply --reject --whitespace=nowarn "../../../$p" ) \
+              ( cd "subprojects/$name" && git apply --reject --whitespace=nowarn "$abs" ) \
                 && echo "      OK" || echo "      [!] sebagian/skip (lihat .rej)"
             done
           done
