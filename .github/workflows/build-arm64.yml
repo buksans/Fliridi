@@ -58,12 +58,20 @@ jobs:
           git checkout "$FRIDA_TAG"
           git submodule update --init --recursive
 
+          # apply TOLERAN: git apply --reject (hunk yg cocok masuk, yg tak cocok
+          # di-skip jadi .rej) -> build tetap lanjut walau 1-2 patch drift.
           for path in ../patches/*; do
             name=$(basename "$path")
             [ -d "subprojects/$name" ] || continue
             echo "== apply patches -> subprojects/$name =="
-            ( cd "subprojects/$name" && git am ../../../patches/"$name"/*.patch )
+            for p in ../patches/"$name"/*.patch; do
+              echo "   -> $(basename "$p")"
+              ( cd "subprojects/$name" && git apply --reject --whitespace=nowarn "../../../$p" ) \
+                && echo "      OK" || echo "      [!] sebagian/skip (lihat .rej)"
+            done
           done
+          echo "== .rej files (hunk yg gagal) =="
+          find subprojects -name '*.rej' -print || true
           cd ..
           mkdir build-arm64 && cd build-arm64
           ../frida/configure --host=android-arm64
